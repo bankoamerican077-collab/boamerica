@@ -27,7 +27,7 @@ export interface TransactionType {
 
 export const getAllTransactionHistory = async (): Promise<TransactionType[]> => {
 	try {
-		const nftsRef = collection(db, "transaction");
+		const nftsRef = collection(db, "transactions");
 		const querySnapshot = await getDocs(nftsRef);
 		const nfts: TransactionType[] = [];
 
