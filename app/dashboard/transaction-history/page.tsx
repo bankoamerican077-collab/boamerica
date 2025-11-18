@@ -1,8 +1,10 @@
-"use client";
+'use client'
+
+import { Plus, Edit2, Search, Filter, ArrowLeft, Calendar, CreditCard, Tag, FileText, CheckCircle, AlertCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+
 import {
 	Select,
 	SelectContent,
@@ -10,10 +12,82 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { mockTransactions, mockAccounts } from "@/lib/data/MockData";
 
-export default function TransactionsPage() {
-	const [searchTerm, setSearchTerm] = useState("");
+// --- MOCK UI COMPONENTS ---
+
+
+
+
+
+
+const NativeSelect = ({ value, onChange, options, placeholder }) => (
+  <div className="relative">
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none"
+    >
+      <option value="" disabled>{placeholder}</option>
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+  </div>
+);
+
+
+// --- MAIN APPLICATION CODE ---
+
+const mockTransactions = [
+  {
+    id: "txn-5",
+    accountId: "acc-2",
+    date: "2025-11-02",
+    merchant: "Transfer from Checking",
+    description: "Monthly savings allocation for the holiday fund.",
+    category: "Transfer",
+    amount: 500.0,
+    type: "credit",
+    status: "completed",
+  },
+  {
+    id: "txn-6",
+    accountId: "acc-1",
+    date: "2025-11-05",
+    merchant: "Food Vendor",
+    description: "", 
+    category: "Food",
+    amount: 45.0,
+    type: "debit",
+    status: "pending",
+  },
+  {
+    id: "txn-7",
+    accountId: "acc-1",
+    date: "2025-11-06",
+    merchant: "Tech Gadgets Inc",
+    description: "New headphones for office noise cancellation.", 
+    category: "Electronics",
+    amount: 120.50,
+    type: "debit",
+    status: "completed",
+  },
+];
+
+export default function TransactionHistory() {
+  const [transactions, setTransactions] = useState(mockTransactions);
+  
+  // Navigation State
+  const [selectedTransaction, setSelectedTransaction] = useState(null); // If set, shows Detail View
+  const [showForm, setShowForm] = useState(false);
+  const [mode, setMode] = useState("new");
+
+  const [searchTerm, setSearchTerm] = useState("");
 	const [filterType, setFilterType] = useState("all");
 	const [filterAccount, setFilterAccount] = useState("all");
 
@@ -46,9 +120,194 @@ export default function TransactionsPage() {
 		return matchesSearch && matchesType && matchesDate;
 	});
 
-	return (
-		<div className="space-y-6">
-			{/* PAGE HEADER */}
+  // Form State
+  const [formData, setFormData] = useState({
+    id: "",
+    accountId: "",
+    date: "",
+    merchant: "",
+    description: "",
+    category: "",
+    amount: "",
+    type: "credit",
+    status: "completed",
+  });
+
+  const totalBalance = transactions.reduce((acc, tx) => {
+    if (tx.type === "credit") return acc + Number(tx.amount);
+    if (tx.type === "debit") return acc - Number(tx.amount);
+    return acc;
+  }, 0);
+
+  // --- HANDLERS ---
+
+  const handleRowClick = (tx) => {
+    setSelectedTransaction(tx);
+  };
+
+  const openNewForm = (e) => {
+    e.stopPropagation(); // Prevent row click if button inside row
+    setMode("new");
+    setFormData({
+      id: "",
+      accountId: "",
+      date: new Date().toISOString().split('T')[0],
+      merchant: "",
+      description: "",
+      category: "",
+      amount: "",
+      type: "credit",
+      status: "completed",
+    });
+    setShowForm(true);
+  };
+
+  const openEditForm = (e, tx) => {
+    e.stopPropagation();
+    setMode("edit");
+    setFormData({
+      ...tx,
+      description: tx.description || "",
+      amount: String(tx.amount),
+    });
+    setShowForm(true);
+    // If we are in detail view, we might want to close detail view or keep it open. 
+    // For now, let's close detail view if we edit, or just show form on top.
+  };
+
+  const handleSave = () => {
+	const [searchTerm, setSearchTerm] = useState("");
+	const [filterType, setFilterType] = useState("all");
+	const [filterAccount, setFilterAccount] = useState("all");
+
+	const [selectedDate, setSelectedDate] = useState("");
+    if (!formData.amount || Number(formData.amount) <= 0) {
+      alert("Enter a valid amount.");
+      return;
+    }
+    if (!formData.date || !formData.merchant || !formData.category) {
+      alert("Fill all required fields.");
+      return;
+    }
+
+    const normalized = {
+      id: formData.id || `txn-${Date.now()}`,
+      accountId: formData.accountId || "acc-1",
+      date: formData.date,
+      merchant: formData.merchant,
+      description: formData.description,
+      category: formData.category,
+      amount: Number(formData.amount),
+      type: formData.type,
+      status: formData.status,
+    };
+
+    if (mode === "new") {
+      setTransactions((prev) => [normalized, ...prev]);
+    } else {
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === normalized.id ? normalized : t))
+      );
+      // Update selected transaction if we are editing the one currently viewed
+      if (selectedTransaction && selectedTransaction.id === normalized.id) {
+        setSelectedTransaction(normalized);
+      }
+    }
+
+    setShowForm(false);
+  };
+
+  // --- DETAIL VIEW COMPONENT ---
+  if (selectedTransaction && !showForm) {
+    return (
+      <div className="fixed inset-0 bg-slate-50 z-40 overflow-y-auto animate-in slide-in-from-bottom-4 duration-200">
+        <div className="max-w-3xl mx-auto min-h-screen bg-white shadow-xl border-x border-slate-100">
+          {/* Content */}
+          <div className="p-6 space-y-8">
+             {/* header nav */}
+
+		  <div onClick={()=> setSelectedTransaction(null)}>
+			<ArrowLeft/>
+		  </div>
+            {/* Amount Hero */}
+            <div className="text-center py-8 border-b border-slate-100 border-dashed">
+              <span className={`text-4xl font-bold tracking-tight ${
+                selectedTransaction.type === 'debit' ? 'text-slate-900' : 'text-emerald-600'
+              }`}>
+                 {selectedTransaction.type === 'debit' ? '-' : '+'}${selectedTransaction.amount.toFixed(2)}
+              </span>
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                  ${selectedTransaction.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 
+                    selectedTransaction.status === 'pending' ? 'bg-amber-100 text-amber-800' : 
+                    'bg-red-100 text-red-800'}`}>
+                  {selectedTransaction.status === 'completed' ? <CheckCircle className="w-3 h-3 mr-1"/> : 
+                   selectedTransaction.status === 'pending' ? <AlertCircle className="w-3 h-3 mr-1"/> :
+                   <XCircle className="w-3 h-3 mr-1"/>}
+                  {selectedTransaction.status}
+                </span>
+              </div>
+            </div>
+
+            {/* Main Details Grid */}
+            <div className="grid gap-6 md:grid-cols-2">
+               
+               <div className="space-y-1">
+                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                   <CreditCard className="w-3 h-3" /> Merchant
+                 </label>
+                 <p className="text-lg font-medium text-slate-900">{selectedTransaction.merchant}</p>
+               </div>
+
+               <div className="space-y-1">
+                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                   <Calendar className="w-3 h-3" /> Date
+                 </label>
+                 <p className="text-lg font-medium text-slate-900">
+                    {new Date(selectedTransaction.date).toLocaleDateString(undefined, { 
+                      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+                    })}
+                 </p>
+               </div>
+
+               <div className="space-y-1">
+                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                   <Tag className="w-3 h-3" /> Category
+                 </label>
+                 <p className="text-lg font-medium text-slate-900">{selectedTransaction.category}</p>
+               </div>
+
+               <div className="space-y-1">
+                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                   <FileText className="w-3 h-3" /> Transaction ID
+                 </label>
+                 <p className="text-sm font-mono text-slate-600 bg-slate-100 inline-block px-2 py-1 rounded">
+                   {selectedTransaction.id}
+                 </p>
+               </div>
+            </div>
+
+            {/* Description Section */}
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 block">
+                Description / Notes
+              </label>
+              <p className="text-slate-700 whitespace-pre-wrap leading-relaxed">
+                {selectedTransaction.description || "No description provided for this transaction."}
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- DASHBOARD VIEW (DEFAULT) ---
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="max-w-6xl mx-auto space-y-6">
+		 {/* PAGE HEADER */}
 			<div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
 				<div className="flex justify-start items-center text-primary">
 					<h1 className="text-3xl font-bold">Transaction History</h1>
@@ -94,120 +353,130 @@ export default function TransactionsPage() {
 				</div>
 			</div>
 
-			{/* ✅ DESKTOP TABLE VIEW */}
-			<Card className="hidden lg:block bg-white rounded-md overflow-hidden">
-				<table className="w-full">
-					<thead className="bg-muted/40 border-b">
-						<tr>
-							<th className="text-left p-4 font-semibold">Posting Date</th>
-							<th className="text-left p-4 font-semibold">Description</th>
-							<th className="text-left p-4 font-semibold">Status</th>
-							<th className="text-right p-4 font-semibold">Amount</th>
-						</tr>
-					</thead>
-					<tbody>
-						{filteredTransactions.map((transaction) => {
-							const account = mockAccounts.find(
-								(acc) => acc.id === transaction.accountId
-							);
+        {/* DESKTOP TABLE VIEW */}
+        <Card className="hidden lg:block bg-white overflow-hidden shadow-sm rounded-md">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left p-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Date</th>
+                  <th className="text-left p-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Merchant</th>
+                  <th className="text-left p-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Category</th>
+                  <th className="text-left p-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Status</th>
+                  <th className="text-right p-4 font-semibold text-slate-500 uppercase tracking-wider text-xs">Amount</th>
+                  <th className="text-right p-4 font-semibold text-slate-500 uppercase tracking-wider text-xs"></th>
+                </tr>
+              </thead>
 
-							return (
-								<tr
-									key={transaction.id}
-									className="border-b hover:bg-muted/40 transition"
-								>
-									<td className="p-4">
-										{new Date(transaction.date).toLocaleDateString("en-US", {
-											month: "short",
-											day: "numeric",
-											year: "numeric",
-										})}
-									</td>
+              <tbody className="divide-y divide-slate-100">
+                {transactions.map((tx) => (
+                  <tr 
+                    key={tx.id} 
+                    onClick={() => handleRowClick(tx)}
+                    className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                  >
+                    <td className="p-4 whitespace-nowrap text-slate-600 font-medium">
+                      {new Date(tx.date).toLocaleDateString()}
+                    </td>
 
-									<td className="p-4">
-										<div className="font-medium">{transaction.merchant}</div>
-										<div className="text-xs text-muted-foreground">
-											{account?.accountNumber}
-										</div>
-									</td>
+                    <td className="p-4">
+                      <div className="font-medium text-slate-900">{tx.merchant}</div>
+                      {tx.description && (
+                        <div className="text-xs text-slate-500 mt-0.5 line-clamp-1 max-w-[200px]">
+                          {tx.description}
+                        </div>
+                      )}
+                    </td>
 
-									<td className="p-4 capitalize text-muted-foreground">
-										{transaction.status}
-									</td>
+                    <td className="p-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 group-hover:bg-white transition-colors">
+                        {tx.category}
+                      </span>
+                    </td>
 
-									<td
-										className={`p-4 text-right font-semibold ${
-											transaction.type === "debit"
-												? "text-destructive"
-												: "text-success"
-										}`}
-									>
-										{transaction.type === "debit" ? "-" : "+"}$
-										{Math.abs(transaction.amount).toFixed(2)}
-									</td>
-								</tr>
-							);
-						})}
-					</tbody>
-				</table>
-			</Card>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${
+                          tx.status === 'completed' ? 'bg-emerald-500' :
+                          tx.status === 'pending' ? 'bg-amber-500' : 'bg-red-500'
+                        }`} />
+                        <span className="capitalize text-slate-700">{tx.status}</span>
+                      </div>
+                    </td>
 
-			{/* ✅ MOBILE CARDS */}
-			<div className="lg:hidden space-y-3">
-				{filteredTransactions.map((transaction) => {
-					const account = mockAccounts.find(
-						(acc) => acc.id === transaction.accountId
-					);
+                    <td className={`p-4 text-right font-bold ${
+                      tx.type === "debit" ? "text-slate-900" : "text-emerald-600"
+                    }`}>
+                      {tx.type === "debit" ? "-" : "+"}${tx.amount.toFixed(2)}
+                    </td>
 
-					return (
-						<Card
-							key={transaction.id}
-							className="p-4 flex flex-col gap-3 bg-white rounded-md"
-						>
-							<div className="flex items-center justify-between">
-								<p className="text-sm text-muted-foreground">
-									{new Date(transaction.date).toLocaleDateString("en-US", {
-										month: "short",
-										day: "numeric",
-										year: "numeric",
-									})}
-								</p>
+                    <td className="p-4 text-right text-slate-400">
+                       <span className="group-hover:text-slate-600 text-xs">View Details &rarr;</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
 
-								<p
-									className={`font-semibold text-lg ${
-										transaction.type === "debit"
-											? "text-destructive"
-											: "text-success"
-									}`}
-								>
-									{transaction.type === "debit" ? "-" : "+"}$
-									{Math.abs(transaction.amount).toFixed(2)}
-								</p>
-							</div>
+        {/* MOBILE CARD VIEW */}
+        <div className="lg:hidden space-y-3">
+          {transactions.map((tx) => (
+            <div 
+              key={tx.id} 
+              onClick={() => handleRowClick(tx)}
+              className="bg-white p-4 rounded-md border shadow-sm active:scale-[0.99] transition-transform"
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="text-xs text-slate-500 font-medium mb-1">
+                    {new Date(tx.date).toLocaleDateString()}
+                  </p>
+                  <h3 className="font-semibold text-slate-900 text-base">{tx.merchant}</h3>
+                  {tx.description && (
+                    <p className="text-xs text-slate-500 mt-1 italic line-clamp-1">
+                      "{tx.description}"
+                    </p>
+                  )}
+                </div>
+                <p className={`font-bold text-lg ${
+                  tx.type === "debit" ? "text-slate-900" : "text-emerald-600"
+                }`}>
+                  {tx.type === "debit" ? "-" : "+"}{tx.amount.toFixed(2)}
+                </p>
+              </div>
 
-							<div>
-								<p className="font-medium">{transaction.merchant}</p>
-								<p className="text-xs text-muted-foreground">
-									{account?.accountNumber}
-								</p>
-							</div>
+              <div className="flex items-center justify-between pt-3 border-t border-slate-50 mt-3">
+                <div className="flex gap-2">
+                   <span className="px-2 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600">
+                    {tx.category}
+                  </span>
+                  <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                     tx.status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
+                     tx.status === 'pending' ? 'bg-amber-50 text-amber-700' : 
+                     'bg-red-50 text-red-700'
+                  }`}>
+                    {tx.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-							<p className="text-xs capitalize text-muted-foreground">
-								{transaction.status}
-							</p>
-						</Card>
-					);
-				})}
-			</div>
+        {/* NO RESULTS */}
+        {transactions.length === 0 && (
+          <Card className="p-12 text-center">
+            <div className="flex flex-col items-center justify-center text-slate-500">
+              <Filter className="w-12 h-12 mb-4 opacity-20" />
+              <p className="text-lg font-medium">No transactions found</p>
+            </div>
+          </Card>
+        )}
 
-			{/* ✅ NO RESULTS */}
-			{filteredTransactions.length === 0 && (
-				<Card className="p-12 text-center">
-					<p className="text-muted-foreground">
-						No transactions found matching your criteria
-					</p>
-				</Card>
-			)}
-		</div>
-	);
+        
+      </div>
+    </div>
+  );
 }
