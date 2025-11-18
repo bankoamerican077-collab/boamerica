@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, Edit2, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {customAlphabet} from 'nanoid'
 
 // --- MOCK UI COMPONENTS (Inlined for single-file preview) ---
 
@@ -79,7 +80,7 @@ export default function AdminTransactionsDashboard() {
   const [transactions, setTransactions] = useState(mockTransactions);
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState("new");
-
+	const random12 = customAlphabet('0123456789',12)
   // ✅ Form structure updated with description
   const [formData, setFormData] = useState({
     id: "",
@@ -99,6 +100,8 @@ export default function AdminTransactionsDashboard() {
     if (tx.type === "debit") return acc - Number(tx.amount);
     return acc;
   }, 0);
+
+
 
   // ✅ Open new form
   const openNewForm = () => {
@@ -139,12 +142,13 @@ export default function AdminTransactionsDashboard() {
       return;
     }
 
-    const normalized = {
+  const normalized = {
       id: formData.id || `txn-${Date.now()}`,
       accountId: formData.accountId || "acc-1",
+	  transactionId: random12(),
       date: formData.date,
       merchant: formData.merchant,
-      description: formData.description, // Save description
+      description: formData.description,
       category: formData.category,
       amount: Number(formData.amount),
       type: formData.type,
@@ -163,7 +167,7 @@ export default function AdminTransactionsDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 font-sans text-slate-900">
+    <div className="min-h-screen font-sans text-slate-900">
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* ✅ Header + Balance */}
@@ -333,7 +337,8 @@ export default function AdminTransactionsDashboard() {
                   />
 				  
                   {/* Optional Description Field */}
-				  <label className="text-xs font-medium text-slate-500 mb-1 block">Merchant Details</label>
+				  <label className="text-xs font-medium text-slate-500 mb-1 block">Discription
+				  </label>
                   <Input
                     className="mt-2"
                     placeholder="Description (Optional)"

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
+
 import {
 	Select,
 	SelectContent,
@@ -13,32 +14,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 
-// --- MOCK UI COMPONENTS ---
-
-
-
-
-
-
-const NativeSelect = ({ value, onChange, options, placeholder }) => (
-  <div className="relative">
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="flex h-10 w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 appearance-none"
-    >
-      <option value="" disabled>{placeholder}</option>
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>{opt.label}</option>
-      ))}
-    </select>
-    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    </div>
-  </div>
-);
 
 
 // --- MAIN APPLICATION CODE ---
@@ -162,60 +137,8 @@ export default function TransactionHistory() {
     setShowForm(true);
   };
 
-  const openEditForm = (e, tx) => {
-    e.stopPropagation();
-    setMode("edit");
-    setFormData({
-      ...tx,
-      description: tx.description || "",
-      amount: String(tx.amount),
-    });
-    setShowForm(true);
-    // If we are in detail view, we might want to close detail view or keep it open. 
-    // For now, let's close detail view if we edit, or just show form on top.
-  };
 
-  const handleSave = () => {
-	const [searchTerm, setSearchTerm] = useState("");
-	const [filterType, setFilterType] = useState("all");
-	const [filterAccount, setFilterAccount] = useState("all");
 
-	const [selectedDate, setSelectedDate] = useState("");
-    if (!formData.amount || Number(formData.amount) <= 0) {
-      alert("Enter a valid amount.");
-      return;
-    }
-    if (!formData.date || !formData.merchant || !formData.category) {
-      alert("Fill all required fields.");
-      return;
-    }
-
-    const normalized = {
-      id: formData.id || `txn-${Date.now()}`,
-      accountId: formData.accountId || "acc-1",
-      date: formData.date,
-      merchant: formData.merchant,
-      description: formData.description,
-      category: formData.category,
-      amount: Number(formData.amount),
-      type: formData.type,
-      status: formData.status,
-    };
-
-    if (mode === "new") {
-      setTransactions((prev) => [normalized, ...prev]);
-    } else {
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === normalized.id ? normalized : t))
-      );
-      // Update selected transaction if we are editing the one currently viewed
-      if (selectedTransaction && selectedTransaction.id === normalized.id) {
-        setSelectedTransaction(normalized);
-      }
-    }
-
-    setShowForm(false);
-  };
 
   // --- DETAIL VIEW COMPONENT ---
   if (selectedTransaction && !showForm) {
