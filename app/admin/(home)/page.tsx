@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Plus, Edit2, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {customAlphabet} from 'nanoid'
+import {customAlphabet, nanoid} from 'nanoid'
+import { storeTransactionDocumentData, updateDocumentByRefId } from "@/lib/firebaseUtils";
 
+
+import { TransactionType } from "@/lib/firebaseUtils";
 // --- MOCK UI COMPONENTS (Inlined for single-file preview) ---
 
 const Card = ({ children, className = "" }) => (
@@ -42,7 +45,7 @@ const NativeSelect = ({ value, onChange, options, placeholder }) => (
 // ✅ Mock Data with optional Description
 const mockTransactions = [
   {
-    id: "txn-5",
+    refId: "txn-5",
     accountId: "acc-2",
     date: "2025-11-02",
     merchant: "Transfer from Checking",
@@ -53,7 +56,7 @@ const mockTransactions = [
     status: "completed",
   },
   {
-    id: "txn-6",
+    refId: "txn-6",
     accountId: "acc-1",
     date: "2025-11-05",
     merchant: "Food Vendor",
@@ -64,7 +67,7 @@ const mockTransactions = [
     status: "pending",
   },
   {
-    id: "txn-7",
+    refId: "txn-7",
     accountId: "acc-1",
     date: "2025-11-06",
     merchant: "Tech Gadgets Inc",
@@ -77,13 +80,16 @@ const mockTransactions = [
 ];
 
 export default function AdminTransactionsDashboard() {
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [mode, setMode] = useState("new");
 	const random12 = customAlphabet('0123456789',12)
+  const [loading,setLoading] = useState(false)
+
+
   // ✅ Form structure updated with description
   const [formData, setFormData] = useState({
-    id: "",
+    refId: "",
     accountId: "",
     date: "",
     merchant: "",
@@ -107,7 +113,7 @@ export default function AdminTransactionsDashboard() {
   const openNewForm = () => {
     setMode("new");
     setFormData({
-      id: "",
+      refId: "",
       accountId: "",
       date: new Date().toISOString().split('T')[0],
       merchant: "",
@@ -125,14 +131,15 @@ export default function AdminTransactionsDashboard() {
     setMode("edit");
     setFormData({
       ...tx,
+      refId: tx.refId,
       description: tx.description || "", // Ensure it's not undefined
-      amount: String(tx.amount),
+      amount: tx.amount,
     });
     setShowForm(true);
   };
 
   // ✅ Handle save
-  const handleSave = () => {
+  const handleSave = async() => {
     if (!formData.amount || Number(formData.amount) <= 0) {
       alert("Enter a valid amount.");
       return;
@@ -143,10 +150,10 @@ export default function AdminTransactionsDashboard() {
     }
 
   const normalized = {
-      id: formData.id || `txn-${Date.now()}`,
+      refId: nanoid(21),
       accountId: formData.accountId || "acc-1",
-	  transactionId: random12(),
-      date: formData.date,
+	    transactionId: Number(random12()),
+      date: `${formData.date}`,
       merchant: formData.merchant,
       description: formData.description,
       category: formData.category,
@@ -155,15 +162,43 @@ export default function AdminTransactionsDashboard() {
       status: formData.status,
     };
 
-    if (mode === "new") {
-      setTransactions((prev) => [normalized, ...prev]);
-    } else {
-      setTransactions((prev) =>
-        prev.map((t) => (t.id === normalized.id ? normalized : t))
-      );
-    }
+    const normalizedUpdatedDocuments = {
+      refId: formData.refId,
+      accountId: formData.accountId || "acc-1",
+	    transactionId: Number(random12()),
+      date: `${formData.date}`,
+      merchant: formData.merchant,
+      description: formData.description,
+      category: formData.category,
+      amount: Number(formData.amount),
+      type: formData.type,
+      status: formData.status,
+    };
 
-    setShowForm(false);
+
+    try {
+       if (mode === "new") {
+      setTransactions((prev) => [normalized, ...prev]);
+      const documentRef = await storeTransactionDocumentData(normalized)
+      if (documentRef){
+        console.log('document added succefully ref no:',documentRef);
+      }
+    } else {
+      const newTransaction = transactions.map((t)=>(t.refId === formData.refId ? normalizedUpdatedDocuments : t))
+      setTransactions(newTransaction);
+      const documentUpdated = await updateDocumentByRefId('transactions',formData.refId,normalizedUpdatedDocuments)
+      if (documentUpdated){
+        console.log('document added succefully');
+      }
+    }
+    } catch (error) {
+      console.log('error storing file',error)
+    }finally{
+      setShowForm(false);
+    }
+   
+
+    
   };
 
   return (
@@ -204,7 +239,7 @@ export default function AdminTransactionsDashboard() {
 
               <tbody className="divide-y divide-slate-100">
                 {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={tx.refId} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4 whitespace-nowrap text-slate-600">
                       {new Date(tx.date).toLocaleDateString()}
                     </td>
@@ -256,7 +291,7 @@ export default function AdminTransactionsDashboard() {
         {/* ✅ MOBILE CARD VIEW */}
         <div className="lg:hidden space-y-3">
           {transactions.map((tx) => (
-            <Card key={tx.id} className="p-4 space-y-3">
+            <Card key={tx.refId} className="p-4 space-y-3">
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm text-slate-500 mb-1">
@@ -367,13 +402,23 @@ export default function AdminTransactionsDashboard() {
                   </div>
                 </div>
 
-                <div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                   <label className="text-xs font-medium text-slate-500 mb-1 block">Date</label>
                   <Input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   />
+                   </div>
+                    <div>
+                     <label className="text-xs font-medium text-slate-500 mb-1 block">Account ID</label>
+                    <Input
+                      placeholder="Acct-1"
+                      value={formData.accountId}
+                      onChange={(e) => setFormData({ ...formData, accountId: e.target.value })}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
