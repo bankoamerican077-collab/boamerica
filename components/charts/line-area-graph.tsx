@@ -18,7 +18,7 @@ interface DataPoint {
 
 interface Props {
 	data: DataPoint[];
-	mode?: "weekly" | "monthly";
+	mode?: "weekly" | "monthly" | 'daily';
 }
 
 export default function LineAreaGraph({ data, mode = "monthly" }: Props) {
