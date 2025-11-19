@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { getUserByEmail } from "@/lib/firebaseUtils"; // adjust path
+import { getUserByIdentifier } from "@/lib/firebaseUtils"; // adjust path
 import LoadingSpinner from "@/components/tools/loading-spinner";
 import { useUpdateUserDocument } from "@/hooks/useUpdateUserDocument/useUpdateUserDocument";
 
@@ -33,7 +33,7 @@ export default function UserSettingsPage() {
   useEffect(() => {
     const fetchUser = async () => {
       const email = "daniel.smith@email.com"; // replace with logged-in user
-      const data = await getUserByEmail(email);
+      const data = await getUserByIdentifier("email", email);
       if (data) setUser(data as UserSettings);
       setLoading(false);
     };
