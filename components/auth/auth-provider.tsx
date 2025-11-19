@@ -14,6 +14,7 @@ interface Session {
   signInTime: string;
   userId: string;
   email: string;
+  role: "user" | "admin";
 }
 
 interface AuthContextType {

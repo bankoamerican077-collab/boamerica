@@ -38,6 +38,7 @@ export default function SignInPage() {
         signInTime: new Date().toISOString(),
         userId: user.userId,
         email: user.email || "",
+        role: user.role,
       };
 
       // Save session in localStorage (you can use sessionStorage instead if preferred)

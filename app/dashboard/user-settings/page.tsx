@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { getUserByIdentifier } from "@/lib/firebaseUtils"; // adjust path
 import LoadingSpinner from "@/components/tools/loading-spinner";
 import { useUpdateUserDocument } from "@/hooks/useUpdateUserDocument/useUpdateUserDocument";
+import { useAuth } from "@/components/auth/auth-provider";
 
 interface UserSettings {
   firstName: string;
@@ -27,18 +28,20 @@ interface UserSettings {
 export default function UserSettingsPage() {
   const [user, setUser] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user: authUser } = useAuth();
 
   const { update, loading: updating } = useUpdateUserDocument();
 
   useEffect(() => {
+    if (!authUser) return;
     const fetchUser = async () => {
-      const email = "daniel.smith@email.com"; // replace with logged-in user
+      const email = authUser.email; // replace with logged-in user
       const data = await getUserByIdentifier("email", email);
       if (data) setUser(data as UserSettings);
       setLoading(false);
     };
     fetchUser();
-  }, []);
+  }, [authUser]);
 
   const handleToggle = async (field: keyof UserSettings, value: boolean) => {
     if (!user) return;
