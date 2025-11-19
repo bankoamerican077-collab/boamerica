@@ -15,6 +15,7 @@ interface Session {
   userId: string;
   email: string;
   role: "user" | "admin";
+  name: string;
 }
 
 interface AuthContextType {

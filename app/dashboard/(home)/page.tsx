@@ -9,6 +9,7 @@ import { ArrowDown, ArrowUp, Info } from "lucide-react";
 
 import { getAllTransactionHistory } from "@/lib/firebaseUtils";
 import type { TransactionType } from "@/lib/firebaseUtils";
+import { useAuth } from "@/components/auth/auth-provider";
 
 // Spinner Component
 function Spinner({ size = 36 }: { size?: number }) {
@@ -81,7 +82,13 @@ export default function HomeDashboard() {
   const [period, setPeriod] = useState<"daily" | "weekly" | "monthly">(
     "weekly"
   );
+  const [user, setUser] = useState({
+    email: "",
+    role: "user",
+    fullName: "User",
+  });
   const [showDollar, setShowDollar] = useState<boolean>(true); // global $/% toggle
+  const { user: authUser } = useAuth();
 
   // Fetch transactions
   useEffect(() => {
@@ -102,6 +109,13 @@ export default function HomeDashboard() {
             }))
           : [];
         setDocs(normalized);
+        if (authUser) {
+          setUser({
+            email: authUser.email,
+            role: authUser.role,
+            fullName: authUser.name,
+          });
+        }
       } catch (err) {
         console.error("Error fetching transactions:", err);
         setDocs([]);
@@ -257,7 +271,7 @@ export default function HomeDashboard() {
       {/* Header + Filters */}
       <div className="flex flex-col gap-6">
         <h1 className="text-2xl font-bold text-gray-800 lg:text-4xl">
-          WELCOME USER
+          WELCOME {user.fullName}
         </h1>
 
         <div className="flex flex-row items-center justify-end gap-2">

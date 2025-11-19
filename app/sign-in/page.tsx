@@ -39,6 +39,7 @@ export default function SignInPage() {
         userId: user.userId,
         email: user.email || "",
         role: user.role,
+        name: `${user.firstName} ${user.lastName}`,
       };
 
       // Save session in localStorage (you can use sessionStorage instead if preferred)
@@ -55,7 +56,7 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-2">
       <div className="fixed top-0 left-0 px-3 py-4.5 flex w-full bg-white z-10">
         <h2 className="text-xl font-bold text-primary">BANK OF AMERICA</h2>
         <img

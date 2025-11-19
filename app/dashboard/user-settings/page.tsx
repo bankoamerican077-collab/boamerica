@@ -29,7 +29,7 @@ export default function UserSettingsPage() {
   const [user, setUser] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const { user: authUser } = useAuth();
-  console.log(authUser);
+  // console.log(authUser);
 
   const { update, loading: updating } = useUpdateUserDocument();
 
