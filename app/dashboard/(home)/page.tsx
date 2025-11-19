@@ -85,7 +85,7 @@ export default function HomeDashboard() {
   const [user, setUser] = useState({
     email: "",
     role: "user",
-    fullName: "User",
+    fullName: "USER",
   });
   const [showDollar, setShowDollar] = useState<boolean>(true); // global $/% toggle
   const { user: authUser } = useAuth();
@@ -126,7 +126,7 @@ export default function HomeDashboard() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [authUser]);
 
   // Compute chart data and bank info
   const {
@@ -270,7 +270,7 @@ export default function HomeDashboard() {
     <div className="flex flex-col min-h-screen gap-8 pt-8">
       {/* Header + Filters */}
       <div className="flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-gray-800 lg:text-4xl">
+        <h1 className="text-2xl font-bold text-primary lg:text-4xl">
           WELCOME {user.fullName}
         </h1>
 
