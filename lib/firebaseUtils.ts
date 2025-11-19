@@ -89,3 +89,22 @@ export async function storeTransactionDocumentData(data: TransactionType) {
 		throw error;
 	}
 }
+
+export const getUserByEmail = async (email: string): Promise<any | null> => {
+	try {
+		const usersRef = collection(db, "users");
+		const q = query(usersRef, where("email", "==", email));
+		const querySnapshot = await getDocs(q);
+
+		if (!querySnapshot.empty) {
+			const docSnap = querySnapshot.docs[0]; // take the first match
+			return { id: docSnap.id, ...docSnap.data() };
+		} else {
+			console.warn(`No user found with email "${email}"`);
+			return null;
+		}
+	} catch (error) {
+		console.error("Error fetching user by email:", error);
+		return null;
+	}
+};
