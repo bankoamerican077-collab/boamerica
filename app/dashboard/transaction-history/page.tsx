@@ -1,9 +1,19 @@
-'use client';
+"use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { 
-  Plus, Edit2, Search, Filter, ArrowLeft, Calendar, CreditCard, Tag, 
-  FileText, CheckCircle, AlertCircle, XCircle 
+import {
+  Plus,
+  Edit2,
+  Search,
+  Filter,
+  ArrowLeft,
+  Calendar,
+  CreditCard,
+  Tag,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  XCircle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,21 +26,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { getAllTransactionHistory,TransactionType } from "@/lib/firebaseUtils";
+import { getAllTransactionHistory, TransactionType } from "@/lib/firebaseUtils";
 
 // --------------------------------------------------
 // Main Component
 // --------------------------------------------------
 
 export default function TransactionHistory() {
-
   // ------------------------------
   // STATES
   // ------------------------------
   const [transactions, setTransactions] = useState<TransactionType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [selectedTransaction, setSelectedTransaction] = useState<TransactionType | null>(null);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<TransactionType | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
@@ -42,8 +52,8 @@ export default function TransactionHistory() {
   useEffect(() => {
     const load = async () => {
       const data = await getAllTransactionHistory();
-      console.log('this is the data',data);
-      
+      console.log("this is the data", data);
+
       setTransactions(data);
       setLoading(false);
     };
@@ -84,11 +94,12 @@ export default function TransactionHistory() {
     return (
       <div className="fixed inset-0 bg-slate-50 z-40 overflow-y-auto animate-in slide-in-from-bottom-4 duration-200">
         <div className="max-w-3xl mx-auto min-h-screen bg-white shadow-xl border-x border-slate-100">
-
           <div className="p-6 space-y-8">
-
             {/* Back Button */}
-            <div onClick={() => setSelectedTransaction(null)} className="cursor-pointer">
+            <div
+              onClick={() => setSelectedTransaction(null)}
+              className="cursor-pointer"
+            >
               <ArrowLeft />
             </div>
 
@@ -113,8 +124,8 @@ export default function TransactionHistory() {
                       selectedTransaction.status === "completed"
                         ? "bg-emerald-100 text-emerald-800"
                         : selectedTransaction.status === "pending"
-                        ? "bg-amber-100 text-amber-800"
-                        : "bg-red-100 text-red-800"
+                          ? "bg-amber-100 text-amber-800"
+                          : "bg-red-100 text-red-800"
                     }`}
                 >
                   {selectedTransaction.status === "completed" ? (
@@ -131,7 +142,6 @@ export default function TransactionHistory() {
 
             {/* MAIN DETAILS */}
             <div className="grid gap-6 md:grid-cols-2">
-              
               <DetailItem
                 icon={<CreditCard className="w-3 h-3" />}
                 label="Merchant"
@@ -141,12 +151,15 @@ export default function TransactionHistory() {
               <DetailItem
                 icon={<Calendar className="w-3 h-3" />}
                 label="Date"
-                value={new Date(selectedTransaction.date).toLocaleDateString(undefined, {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                value={new Date(selectedTransaction.date).toLocaleDateString(
+                  undefined,
+                  {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }
+                )}
               />
 
               <DetailItem
@@ -187,14 +200,14 @@ export default function TransactionHistory() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="max-w-6xl mx-auto space-y-6">
-
         {/* PAGE HEADER */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <h1 className="text-3xl font-bold text-primary">Transaction History</h1>
+          <h1 className="text-3xl font-bold text-primary">
+            Transaction History
+          </h1>
 
           {/* FILTERS */}
           <div className="flex flex-row items-center justify-end gap-2">
-
             {/* Search */}
             <Input
               placeholder="Search transactions..."
@@ -227,7 +240,9 @@ export default function TransactionHistory() {
 
         {/* LOADING */}
         {loading && (
-          <Card className="p-12 text-center text-slate-500">Loading transactions...</Card>
+          <Card className="p-12 text-center text-slate-500">
+            Loading transactions...
+          </Card>
         )}
 
         {/* DESKTOP TABLE */}
@@ -242,7 +257,6 @@ export default function TransactionHistory() {
                     <Th>Category</Th>
                     <Th>Status</Th>
                     <Th align="right">Amount</Th>
-                    
                   </tr>
                 </thead>
 
@@ -277,7 +291,9 @@ export default function TransactionHistory() {
                       <Td
                         align="right"
                         className={`font-bold ${
-                          tx.type === "debit" ? "text-slate-900" : "text-emerald-600"
+                          tx.type === "debit"
+                            ? "text-slate-900"
+                            : "text-emerald-600"
                         }`}
                       >
                         {tx.type === "debit" ? "-" : "+"}${tx.amount.toFixed(2)}
@@ -300,7 +316,11 @@ export default function TransactionHistory() {
         {!loading && filteredTransactions.length > 0 && (
           <div className="lg:hidden space-y-3">
             {filteredTransactions.map((tx) => (
-              <MobileCard key={tx.refId} tx={tx} onClick={() => setSelectedTransaction(tx)} />
+              <MobileCard
+                key={tx.refId}
+                tx={tx}
+                onClick={() => setSelectedTransaction(tx)}
+              />
             ))}
           </div>
         )}
@@ -343,9 +363,7 @@ function Th({ children, align = "left" }) {
 }
 
 function Td({ children, align = "left", className = "" }) {
-  return (
-    <td className={`p-4 text-${align} ${className}`}>{children}</td>
-  );
+  return <td className={`p-4 text-${align} ${className}`}>{children}</td>;
 }
 
 function StatusDot({ status }) {
@@ -400,8 +418,8 @@ function MobileCard({ tx, onClick }) {
             tx.status === "completed"
               ? "bg-emerald-50 text-emerald-700"
               : tx.status === "pending"
-              ? "bg-amber-50 text-amber-700"
-              : "bg-red-50 text-red-700"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-red-50 text-red-700"
           }`}
         >
           {tx.status}
