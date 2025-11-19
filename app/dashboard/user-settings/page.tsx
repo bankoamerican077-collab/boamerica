@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, ChangeEvent } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { getUserByEmail } from "@/lib/firebaseUtils"; // adjust path if needed
+import { getUserByEmail } from "@/lib/firebaseUtils"; // adjust path
 import LoadingSpinner from "@/components/tools/loading-spinner";
+import { useUpdateUserDocument } from "@/hooks/useUpdateUserDocument/useUpdateUserDocument";
 
 interface UserSettings {
   firstName: string;
@@ -27,19 +28,34 @@ export default function UserSettingsPage() {
   const [user, setUser] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const { update, loading: updating } = useUpdateUserDocument();
+
   useEffect(() => {
     const fetchUser = async () => {
-      const email = "daniel.smith@email.com"; // replace with current logged-in user's email
+      const email = "daniel.smith@email.com"; // replace with logged-in user
       const data = await getUserByEmail(email);
-      if (data) {
-        setUser(data as UserSettings);
-      }
+      if (data) setUser(data as UserSettings);
       setLoading(false);
     };
     fetchUser();
   }, []);
 
-  const handleSave = () => toast.success("Settings saved successfully!");
+  const handleToggle = async (field: keyof UserSettings, value: boolean) => {
+    if (!user) return;
+
+    setUser({ ...user, [field]: value }); // optimistically update UI
+
+    const success = await update("users", "email", user.email, {
+      [field]: value,
+    });
+    if (!success) {
+      toast.error(`Failed to update ${field}.`);
+      // revert UI change if update fails
+      setUser((prev) => (prev ? { ...prev, [field]: !value } : null));
+    } else {
+      toast.success(`${field} updated successfully.`);
+    }
+  };
 
   if (loading) {
     return (
@@ -80,7 +96,7 @@ export default function UserSettingsPage() {
 
           <div className="space-y-2">
             <Label>Email Address</Label>
-            <Input type="email" defaultValue={user.email} />
+            <Input type="email" defaultValue={user.email} disabled />
           </div>
 
           <div className="space-y-2">
@@ -105,17 +121,17 @@ export default function UserSettingsPage() {
             {[
               {
                 label: "Account Balance Alerts",
-                checked: user.accountBalanceAlerts,
+                field: "accountBalanceAlerts",
                 description: "Get notified when your balance is low",
               },
               {
                 label: "High-Value Transactions",
-                checked: user.highValueTransactions,
+                field: "highValueTransactions",
                 description: "Alerts for transactions above your threshold",
               },
               {
                 label: "Deposit Updates",
-                checked: user.depositUpdate,
+                field: "depositUpdate",
                 description: "Get notified when deposits process",
               },
             ].map((item, i) => (
@@ -126,7 +142,13 @@ export default function UserSettingsPage() {
                     {item.description}
                   </p>
                 </div>
-                <Switch defaultChecked={item.checked} />
+                <Switch
+                  checked={user[item.field as keyof UserSettings] as boolean}
+                  onCheckedChange={(val: boolean) =>
+                    handleToggle(item.field as keyof UserSettings, val)
+                  }
+                  disabled={updating}
+                />
               </div>
             ))}
           </div>
@@ -136,12 +158,12 @@ export default function UserSettingsPage() {
             {[
               {
                 label: "Security Alerts",
-                checked: user.securityAlerts,
+                field: "securityAlerts",
                 description: "Receive high-risk activity notifications",
               },
               {
                 label: "Transaction Alerts",
-                checked: user.transactionAlerts,
+                field: "transactionAlerts",
                 description: "Instant messages for all transactions",
               },
             ].map((item, i) => (
@@ -152,12 +174,16 @@ export default function UserSettingsPage() {
                     {item.description}
                   </p>
                 </div>
-                <Switch defaultChecked={item.checked} />
+                <Switch
+                  checked={user[item.field as keyof UserSettings] as boolean}
+                  onCheckedChange={(val: boolean) =>
+                    handleToggle(item.field as keyof UserSettings, val)
+                  }
+                  disabled={updating}
+                />
               </div>
             ))}
           </div>
-
-          <Button onClick={handleSave}>Save Preferences</Button>
         </Card>
       </section>
 
@@ -179,33 +205,13 @@ export default function UserSettingsPage() {
                 Receive digital statements by email
               </p>
             </div>
-            <Switch defaultChecked={user.paperlessDelivery} />
-          </div>
-        </Card>
-
-        <Card className="p-6 space-y-4 bg-white border-0 rounded-md">
-          <h3 className="text-lg font-semibold">Statement History</h3>
-          <div className="space-y-3">
-            {[
-              { period: "October 2025", date: "11/01/2025" },
-              { period: "September 2025", date: "10/01/2025" },
-              { period: "August 2025", date: "09/01/2025" },
-            ].map((statement, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-              >
-                <div>
-                  <p className="font-medium">{statement.period}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Statement Date: {statement.date}
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Download PDF
-                </Button>
-              </div>
-            ))}
+            <Switch
+              checked={user.paperlessDelivery}
+              onCheckedChange={(val: boolean) =>
+                handleToggle("paperlessDelivery", val)
+              }
+              disabled={updating}
+            />
           </div>
         </Card>
       </section>
